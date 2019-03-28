@@ -1,0 +1,34 @@
+port: 3000
+log:
+  level: DEBUG
+  options:
+    appenders: 
+      accessFile:
+        type: dateFile
+        pattern: "-yyyy-MM-dd"
+        filename: 'log/access.log'
+      errorFile:
+        type: dateFile
+        pattern: "-yyyy-MM-dd"
+        filename: 'log/error.log'
+      access:
+        type: logLevelFilter
+        level: info
+        filename: 'log/access.log'
+        appender: accessFile
+      error:
+        type: logLevelFilter
+        level: ERROR
+        filename: 'log/access.log'
+        appender: errorFile
+
+    categories:
+      default: 
+        appenders:
+        - access
+        - error
+        level: info 
+      http: 
+        appenders:
+        - access
+        level: "DEBUG"

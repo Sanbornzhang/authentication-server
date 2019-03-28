@@ -1,0 +1,25 @@
+name: 'Account'
+properties:
+  id: 
+    type: string
+  name: 
+    type: string
+  username:
+    type: string
+  password:
+    type: string
+methods:
+  login:
+    accepts:
+    - arg: username
+      type: string
+      required: true
+    - arg: password
+      type: string
+      required: true
+    http: 
+      path: '/login'
+      method: POST
+    return:
+      args: 'jwt Token'
+      type: 'Object'
