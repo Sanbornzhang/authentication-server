@@ -21,14 +21,10 @@ log:
         level: ERROR
         filename: 'log/access.log'
         appender: errorFile
-
+# create by scripts not define
     categories:
       default: 
         appenders:
         - access
         - error
         level: info 
-      http: 
-        appenders:
-        - access
-        level: "DEBUG"
