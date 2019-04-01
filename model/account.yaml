@@ -2,6 +2,8 @@ name: 'Account'
 properties:
   id: 
     type: string
+    primaryKey: true
+    allowNull: false
   name: 
     type: string
   username:

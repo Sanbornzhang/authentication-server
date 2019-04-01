@@ -1,4 +1,17 @@
 port: 3000
+db:
+  dev: 
+    dialect: "sqlite"
+    storage: "./db.development.sqlite"
+  test:
+    dialect: "sqlite"
+    storage: ":memory:"
+  production:
+    database: "${dbName}"
+    dialect: "mysql"
+    username: "root"
+    password: "${yourPass}"
+    host: '${yourHost}'
 log:
   level: DEBUG
   options:

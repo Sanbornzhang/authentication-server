@@ -4,7 +4,7 @@ const Koa = require('koa')
 const Router = require('koa-router')
 const json = require('koa-json')
 
-const readYaml = require('./utils/loadYaml')
+const readYaml = require('./utils/load-yaml')
 const execFile = require('./utils/load-boot')
 
 const logs = require('./middleware/logs')
@@ -41,3 +41,4 @@ async function main() {
 }
 
 main()
+module.exports = main
