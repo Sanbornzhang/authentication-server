@@ -3,6 +3,7 @@ const path = require('path')
 const Koa = require('koa')
 const Router = require('koa-router')
 const json = require('koa-json')
+// const swagger = require('swagger-ui')
 
 const readYaml = require('./utils/load-yaml')
 const execFile = require('./utils/load-boot')

@@ -1,0 +1,31 @@
+name: 'Base'
+properties:
+  id: 
+    type: string
+    primaryKey: true
+    allowNull: false
+methods:
+  find:
+    isStaic: true
+    accepts:
+    - arg: filter
+      type: object
+      required: false
+    http: 
+      path: '/'
+      method: get
+    return:
+      args: '[Instance]'
+      type: 'Array'
+  findById:
+    isStaic: true
+    accepts:
+    - arg: id
+      type: string
+      required: false
+    http: 
+      path: '/:id'
+      method: get
+    return:
+      args: '[Instance]'
+      type: 'Array'

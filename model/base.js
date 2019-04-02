@@ -38,7 +38,7 @@ function modelFuncDefine(Instance) {
    * @return {Instance}
    */
   Instance.findById = function findById(id) {
-    return Instance.findByPK(id)
+    return Instance.findByPk(id)
   }
 }
 module.exports = Base
