@@ -12,6 +12,7 @@ properties:
     type: string
 methods:
   login:
+    isStaic: true
     accepts:
     - arg: username
       type: string
