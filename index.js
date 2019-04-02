@@ -16,13 +16,11 @@ const router = new Router()
  */
 async function main() {
   const configOptions = readYaml(path.join(__dirname, 'config.yaml'))
-
-  app.context.configOptions = configOptions
   // TODO:
   // config option validate
+  app.context.configOptions = configOptions
+  app.router = router
 
-  // loading Boot scripts
-  await execFile(app, path.join(__dirname, './boot'))
   // using middleware
   // TODO:
   //  change to middleware func
@@ -31,13 +29,13 @@ async function main() {
   app.use(router.allowedMethods())
   app.use(json())
 
+  // loading Boot scripts
+  await execFile(app, path.join(__dirname, './boot'))
+
+
   app.listen(configOptions.port, _=>{
     console.log(`app listening on port ${configOptions.port}`)
   })
-  router.get('/', (ctx, next) => {
-    ctx.body = {d: 1}
-    next()
-  });
 }
 
 main()
