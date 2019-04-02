@@ -13,30 +13,32 @@ class Base {
     this.modelName = modelName
     this.defineOptions = modelSchema
     this.model = sequelize.define(modelName, modelSchema, options)
+    modelFuncDefine(this.model)
   }
+}
+/**
+ * definition Model Function
+ * @param {*} Instance
+ */
+function modelFuncDefine(Instance) {
   /**
    * find by filter
    * @param {Object} filter
-   * @return {[Instacne]} Instance Array
+   * @return {[Instance]} Instance Array
    */
-  find(filter) {
-    return this.model.findAll(filter)
+  Instance.find = function find(filter) {
+    return Instance.findAll({})
+    .then(_=>{
+      return
+    })
   }
   /**
    * find Instance By id
    * @param {String} id instance id
-   * @return {Instacne}
+   * @return {Instance}
    */
-  findById(id) {
-    return this.model.findByPK(id)
-  }
-  /**
-   * find one Instance
-   * @param {*} filter
-   * @return {Instacne}
-   */
-  findOne(filter) {
-    return this.model.findOne(filter)
+  Instance.findById = function findById(id) {
+    return Instance.findByPK(id)
   }
 }
 module.exports = Base
