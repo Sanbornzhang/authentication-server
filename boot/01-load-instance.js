@@ -6,6 +6,8 @@ const env = require('process').env.NODE_ENV || 'dev'
 const Base = require('../model/base')
 
 const sequelizeOptions = {freezeTableName: true}
+const folderPath = path.join(__dirname, '../model')
+
 /**
  * generate2SequelizeDefinition
  * @param {Object} options config options
@@ -26,9 +28,8 @@ function generate2SequelizeDefinition(options) {
  * @return {[ModelInstance]} model instance array
  */
 function generateModels(sequelize) {
-  const folderPath = path.join(__dirname, '../model')
   const fileList = fs.readdirSync(folderPath)
-  const defineYAML = fileList.filter(filename => path.extname(filename) === '.yaml')
+  const defineYAML = fileList.filter(filename => filename!=='base.yaml' && path.extname(filename) === '.yaml')
   const defineList = defineYAML.map(filename => {
     const filePath = path.join(folderPath, filename)
     return loadYaml(filePath)
@@ -44,7 +45,7 @@ function generateModels(sequelize) {
     })
     if (defineFunctionFileName) {
       const defineFunc = require(path.join(folderPath, defineFunctionFileName))
-      defineFunc(modelDefinition.name)
+      defineFunc(Models[modelDefinition.name].model)
     }
   }
   return Models
