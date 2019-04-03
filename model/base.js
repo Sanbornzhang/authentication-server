@@ -1,3 +1,4 @@
+const uuid = require('uuid')
 /**
  * base class func
  */
@@ -16,6 +17,7 @@ class Base {
     modelFuncDefine(this.model)
   }
 }
+
 /**
  * definition Model Function
  * @param {*} Instance
@@ -39,6 +41,13 @@ function modelFuncDefine(Instance) {
    */
   Instance.findById = function findById(id) {
     return Instance.findByPk(id)
+  }
+  Instance.created = function create(instance) {
+    if (! instance.id) {
+      const idArray = uuid.v1().split('-')
+      instance.id = `${idArray[2]}${idArray[1]}${idArray[3]}${idArray[4]}${idArray[0]}`
+    }
+    return Instance.create(instance)
   }
 }
 module.exports = Base

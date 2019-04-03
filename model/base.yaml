@@ -11,12 +11,26 @@ methods:
     - arg: filter
       type: object
       required: false
+      source: url
     http: 
       path: '/'
       method: get
     return:
       args: '[Instance]'
       type: 'Array'
+  created:
+    isStaic: true
+    accepts:
+    - arg: instance
+      type: Instance
+      required: false
+      source: body
+    http: 
+      path: '/'
+      method: POST
+    return:
+      args: 'Instance'
+      type: 'Object'
   findById:
     isStaic: true
     accepts:
