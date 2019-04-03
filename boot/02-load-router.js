@@ -16,6 +16,29 @@ function hook(ctx, next) {
   next()
 }
 /**
+ * arg params Check
+ * @param {*} params params
+ * @param {*} argDefine arg define
+ * @return {Promise}
+ */
+function argCheck(params, argDefine = {}) {
+  return new Promise((resolve, reject)=>{
+    if (!Object.keys(argDefine) || !argDefine.arg) {
+      return reject(new Error('arg definition Error'))
+    }
+    argDefine.type = argDefine.type || 'string'
+    argDefine.required = argDefine.required || false
+    let arg = params[argDefine.arg]
+    if (argDefine.type.toLowerCase() === 'instance') {
+      arg = params
+    }
+    if (argDefine.required && !arg) {
+      return reject(new Error(`${argDefine.arg} is required`))
+    }
+    return resolve(arg)
+  })
+}
+/**
  * execute function
  * @param {*} ctx
  * @param {*} next
@@ -24,9 +47,29 @@ function hook(ctx, next) {
  * @param {Object} methodDefine
  */
 async function exec(ctx, next, Instance, method, methodDefine) {
-  await Instance[method](ctx.query)
-  next()
+  // TODO:
+  // error handing on last call
+  const args = []
+  const argsDefine = methodDefine.accepts || []
+  methodDefine.http.method = methodDefine.http.method || 'get'
+  for (const argDefine of argsDefine) {
+    argDefine.source = argDefine.source || 'url'
+    let params;
+    if (argDefine.source == 'url') {
+      params = Object.assign(ctx.query, ctx.params)
+    }
+    if (argDefine.source == 'body') {
+      params = Object.assign(ctx.body, ctx.params)
+    }
+    // TODO:
+    // If is instance will check params on model definition
+    const arg = await argCheck(params, argDefine)
+    args.push(arg)
+  }
+  await Instance[method](...args)
+  await next()
 }
+
 const beforeHook = hook
 const afterHook = hook
 
@@ -48,7 +91,8 @@ function defineRouter(router, definition, Instance, log) {
       (ctx, next)=>{
         exec(ctx, next, Instance.model, method, definition[method])
       },
-      afterHook)
+      afterHook
+    )
   })
 }
 /**
