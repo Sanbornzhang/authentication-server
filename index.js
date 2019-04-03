@@ -3,6 +3,7 @@ const path = require('path')
 const Koa = require('koa')
 const Router = require('koa-router')
 const json = require('koa-json')
+const formidable = require('formidable')
 // const swagger = require('swagger-ui')
 
 const readYaml = require('./utils/load-yaml')
@@ -25,11 +26,43 @@ async function main() {
   // using middleware
   // TODO:
   //  change to middleware func
+  const form = new formidable.IncomingForm();
+  const parser = (req)=>{
+    return new Promise((resolve, reject)=>{
+      // no using files
+      form.type = 'multipart'
+      form.multiples = true
+      form.parse(req, (err, fields, files)=>{
+        if (err) return reject(err)
+        return resolve(fields)
+      })
+      // form.on('file',(name, file)=>{
+      //   // handing file logic
+      // })
+    })
+  }
   app.use(logs)
+  app.use(async (ctx, next)=>{
+    ctx.body = await parser(ctx.req)
+    await next()
+  })
   app.use(router.routes())
   app.use(router.allowedMethods())
   app.use(json())
 
+  // TODO:
+  // handing error
+  app.use(async (ctx, next)=>{
+    try {
+      await next()
+    } catch (err) {
+      ctx.status = err.status || 500;
+      ctx.body = err.message;
+      ctx.app.emit('error', err, ctx)
+    }
+  })
+  app.onerror = (err) => {
+  }
   // loading Boot scripts
   await execFile(app, path.join(__dirname, './boot'))
 
