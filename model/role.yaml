@@ -1,0 +1,14 @@
+name: 'Role'
+properties:
+  id: 
+    type: string
+    primaryKey: true
+    allowNull: false
+  name: 
+    type: string
+relations:
+  - role_permission:
+    type: hasMany
+    foreignKey: id
+    model: Permission
+methods:

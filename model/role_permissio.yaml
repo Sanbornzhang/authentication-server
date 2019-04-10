@@ -1,0 +1,12 @@
+name: 'Role_Permissio'
+properties:
+  id: 
+    type: string
+    primaryKey: true
+    allowNull: false
+  roleId:
+    type: string
+    allowNull: false
+  permissioId:
+    type: string
+    allowNull: false

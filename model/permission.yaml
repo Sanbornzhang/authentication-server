@@ -1,0 +1,17 @@
+name: 'Permission'
+properties:
+  id: 
+    type: string
+    primaryKey: true
+    allowNull: false
+  name: 
+    type: string
+  action:
+    type: string
+# relations:
+#   - role_permission:
+#     type: belongsToMany
+#     foreignKey: id
+#     model: Role
+#     through: Role_Permissio
+methods:
