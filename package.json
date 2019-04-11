@@ -12,16 +12,18 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "formidable": "^1.2.1",
     "js-yaml": "^3.13.0",
     "jsonwebtoken": "^8.5.1",
     "koa": "^2.7.0",
-    "koa-bodyparser": "^4.2.1",
     "koa-json": "^2.0.2",
     "koa-router": "^7.4.0",
+    "koa2-swagger-ui": "^2.13.2",
     "log4js": "^4.1.0",
     "mysql2": "^1.6.5",
     "sequelize": "^5.2.8",
-    "sequelize-cli": "^5.4.0"
+    "sequelize-cli": "^5.4.0",
+    "uuid": "^3.3.2"
   },
   "devDependencies": {
     "eslint": "^5.15.3",

@@ -66,33 +66,78 @@ async function exec(ctx, next, Instance, method, methodDefine) {
     const arg = await argCheck(params, argDefine)
     args.push(arg)
   }
-  await Instance[method](...args)
-  await next()
+  const data = await Instance[method](...args)
+  ctx.body = data
+  return next()
 }
 
 const beforeHook = hook
 const afterHook = hook
 
 /**
+ * define Swagger API Document
+ * @param {*} app
+ * @param {String} modelName
+ * @param {*} definition
+ * @param {String} httpPath
+ * @param {String} httpMethod
+ */
+function defineSwaggerAPIDoc(app, modelName, definition, httpPath, httpMethod) {
+  const apiDefinition = {}
+  // define response
+  const responses = {}
+  const statusCode = definition.return.code || 200
+  const type = definition.return.httpType || 'application/json'
+  responses[statusCode] = {
+    description: definition.return.description,
+  }
+  responses[statusCode]['content'] = {}
+  responses[statusCode]['content'][type] = {
+    schema: {
+      type: definition.return.type,
+    },
+  }
+  // define parameters
+  const parameters = []
+  for (const defineParameter of definition.accepts) {
+    const swaggerParameter = {}
+    swaggerParameter.name = defineParameter.arg
+    // TODO:
+    // swaggerParameter.in = definition.http.
+    swaggerParameter.required = defineParameter.required || false
+    swaggerParameter.description = defineParameter.description
+    swaggerParameter.schema = {type: defineParameter.type}
+    parameters.push(swaggerParameter)
+  }
+  apiDefinition.description = definition.description
+  apiDefinition.responses = responses
+  apiDefinition.tags = [modelName]
+  app.paths = app.paths || {}
+  app.paths[httpPath] = app.paths[httpPath] || {}
+  app.paths[httpPath][httpMethod] = apiDefinition
+}
+/**
  * defineRouter
  * @param {router} router app.router
  * @param {Object} definition
  * @param {Instance} Instance
  * @param {logger} log
+ * @param {app} app koa app instance
  */
-function defineRouter(router, definition, Instance, log) {
+function defineRouter(router, definition, Instance, log, app) {
   Object.keys(definition).forEach(method=>{
-    const httpMethod = definition[method].http.method || 'GET'
+    const httpMethod = definition[method].http.method.toLowerCase() || 'get'
     const httpPath = path.posix.join('/', Instance.modelName.toLowerCase(), definition[method].http.path)
     log.info(`Create Router| method: ${httpMethod}, path: ${httpPath}`)
-    router[httpMethod.toLowerCase()](
+    router[httpMethod](
       httpPath,
       beforeHook,
       (ctx, next)=>{
-        exec(ctx, next, Instance.model, method, definition[method])
+        return exec(ctx, next, Instance.model, method, definition[method])
       },
-      afterHook
+      // afterHook
     )
+    defineSwaggerAPIDoc(app, Instance.modelName, definition[method], httpPath, httpMethod)
   })
 }
 /**
@@ -110,8 +155,8 @@ function loadRouterDefine(app) {
   for ( const modelDefinition of defineList) {
     const defineMethods = modelDefinition.methods || {}
     const Instance = app.context.Models[modelDefinition.name]
-    defineRouter(app.router, baseMethodDefine, Instance, app.context.logger)
-    defineRouter(app.router, defineMethods, Instance, app.context.logger)
+    defineRouter(app.router, baseMethodDefine, Instance, app.context.logger, app)
+    defineRouter(app.router, defineMethods, Instance, app.context.logger, app)
   }
 }
 module.exports = (app)=>{

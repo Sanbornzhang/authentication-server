@@ -1,4 +1,4 @@
-name: 'Role_Permissio'
+name: 'Role_Permission'
 properties:
   id: 
     type: string

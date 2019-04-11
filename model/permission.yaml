@@ -8,10 +8,10 @@ properties:
     type: string
   action:
     type: string
-# relations:
-#   - role_permission:
-#     type: belongsToMany
-#     foreignKey: id
-#     model: Role
-#     through: Role_Permissio
+relations:
+  - role_permission:
+    type: belongsToMany
+    foreignKey: id
+    model: Role
+    through: Role_Permission
 methods:

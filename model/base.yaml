@@ -7,15 +7,18 @@ properties:
 methods:
   find:
     isStaic: true
+    description: 'get instance data with filter'
     accepts:
     - arg: filter
       type: object
       required: false
+      description: "filter object"
       source: url
     http: 
       path: '/'
       method: get
     return:
+      description: 'return Instance Array [Instance]'
       args: '[Instance]'
       type: 'Array'
   created:

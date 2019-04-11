@@ -23,6 +23,26 @@ function generate2SequelizeDefinition(options) {
   return translateOptions
 }
 /**
+ * defineSwaggerAPIDocSchemas
+ * @param {*} app app Instance
+ * @param {*} modelName Model name
+ * @param {*} modelDefinition model definition
+ */
+function defineSwaggerAPIDocSchemas(app, modelName, modelDefinition) {
+  app.schemas = app.schemas || {}
+  const schema = {}
+  schema.type = 'object'
+  schema.properties = {}
+  const required = []
+  Object.keys(modelDefinition).forEach(columnName=>{
+    const column = {}
+    column.type = modelDefinition[columnName]['type']
+    schema.properties[columnName] = column
+    if (!modelDefinition[columnName]['allowNull']) required.push(columnName)
+  })
+  app.schemas[modelName] = schema
+}
+/**
  * defineModel
  * @param {*} sequelize sequelize Instance
  * @param {*} modelName model name
@@ -59,7 +79,7 @@ function getDefineFunction(defineFuncFiles = [], name, Model) {
  * @param {*} defineRelations define relations
  */
 function getRelations(relations, modelName, defineRelations = []) {
-  if (defineRelations && defineRelations.length) {
+  if (defineRelations.length) {
     for (const defineRelation of defineRelations) {
       const relation = defineRelation
       relation.currentModel = relation.model
@@ -75,19 +95,25 @@ function getRelations(relations, modelName, defineRelations = []) {
  */
 function defineRelations(relations, Models) {
   for (const relation of relations) {
-    console.log(Models[relation.model])
     const model = Models[relation.model]['model']
     const currentModel = Models[relation.currentModel]['model']
-    console.log(model, currentModel)
-    model[relation.type](currentModel, relation.through)
+    if (relation.type === 'belongsToMany') {
+      const throughModel = Models[relation.through]['model']
+      // TODO: test through as String
+      // model.belongsToMany(currentModel, {through: relation.through})
+      model.belongsToMany(currentModel, {through: throughModel})
+    } else {
+      model[relation.type](currentModel)
+    }
   }
 }
 /**
  * generate Models from model folder
+ * @param {Object} app Koa Instance
  * @param {Object} sequelize database config options
  * @return {[ModelInstance]} model instance array
  */
-function generateModels(sequelize) {
+function generateModels(app, sequelize) {
   const relations = []
   const fileList = fs.readdirSync(folderPath)
   // load define yaml
@@ -101,17 +127,19 @@ function generateModels(sequelize) {
   const Models = {}
   // define sequelize model
   for ( const modelDefinition of defineList) {
+    defineSwaggerAPIDocSchemas(app, modelDefinition.name, modelDefinition.properties)
     Models[modelDefinition.name] = defineModel(sequelize, modelDefinition.name,
                                                modelDefinition.properties, defineFuncFiles)
     getRelations(relations, modelDefinition.name, modelDefinition.relations)
   }
+  defineRelations(relations, Models)
   return Models
 }
 module.exports = (app)=>{
   const dbConfigOptions = app.context.configOptions.db[env]
   const sequelize = new Sequelize(dbConfigOptions.database, dbConfigOptions.username,
                                   dbConfigOptions.password, dbConfigOptions)
-  const Models = generateModels(sequelize)
+  const Models = generateModels(app, sequelize)
   app.context.Models = Models
   app.context.sequelize = sequelize
   return Promise.resolve(Models)

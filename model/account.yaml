@@ -10,6 +10,8 @@ properties:
     type: string
   password:
     type: string
+  roleId:
+    type: string
 methods:
   login:
     isStaic: true
