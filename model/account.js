@@ -14,10 +14,23 @@ function AccountInstance(Account) {
     return crypto.createHash(method).update(password).digest('hex')
   }
 
+  Account.oldCreate = Account.create
+  Account.create = (Instance)=>{
+    console.log(Instance)
+    if (!Instance.password) {
+      const error = new Error()
+      error.code = 400
+      error.message = 'password can not be null'
+      error.name = 'INVALID_PASSWORD'
+      return Promise.reject(error)
+    }
+    Instance.password = encryptionPassword(Instance.password)
+    return Account.oldCreate(Instance)
+  }
   Account.login = (username, password) => {
-    Account.findOne({
+    return Account.findOne({where: {
       username: username,
-    })
+    }})
       .then((account) => {
         if (!account) {
           const error = new Error()

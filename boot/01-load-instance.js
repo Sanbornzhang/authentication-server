@@ -69,7 +69,7 @@ function getDefineFunction(defineFuncFiles = [], name, Model) {
   })
   if (defineFunctionFileName) {
     const defineFunc = require(path.join(folderPath, defineFunctionFileName))
-    defineFunc(Model)
+    defineFunc(Model.model)
   }
 }
 /**

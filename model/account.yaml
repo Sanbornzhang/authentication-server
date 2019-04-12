@@ -19,12 +19,14 @@ methods:
     - arg: username
       type: string
       required: true
+      source: body
     - arg: password
       type: string
       required: true
+      source: body
     http: 
       path: '/login'
       method: POST
     return:
       args: 'jwt Token'
-      type: 'Object'
+      type: 'object'

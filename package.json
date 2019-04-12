@@ -12,6 +12,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "bluebird": "^3.5.4",
     "formidable": "^1.2.1",
     "js-yaml": "^3.13.0",
     "jsonwebtoken": "^8.5.1",

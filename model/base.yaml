@@ -21,11 +21,11 @@ methods:
       description: 'return Instance Array [Instance]'
       args: '[Instance]'
       type: 'Array'
-  created:
+  create:
     isStaic: true
     accepts:
-    - arg: instance
-      type: Instance
+    - arg: Instance
+      type: object
       required: false
       source: body
     http: 
@@ -33,16 +33,17 @@ methods:
       method: POST
     return:
       args: 'Instance'
-      type: 'Object'
+      type: 'object'
   findById:
     isStaic: true
     accepts:
     - arg: id
       type: string
       required: false
+      source: path
     http: 
       path: '/:id'
       method: get
     return:
-      args: '[Instance]'
-      type: 'Array'
+      args: 'Instance'
+      type: 'object'
