@@ -1,4 +1,5 @@
 const fs = require('fs')
+const util = require('util')
 const path = require('path')
 const loadYaml = require('../utils/load-yaml')
 const Promise = require('bluebird')
@@ -64,6 +65,7 @@ function argCheck(ctx, argDefine = {}) {
 async function exec(ctx, next, Instance, method, methodDefine) {
   // TODO:
   // error handing on last call
+  const logger = ctx.logger
   const argsDefine = methodDefine.accepts || []
   methodDefine.http.method = methodDefine.http.method || 'get'
   return Promise.reduce(argsDefine, (args, argDefine)=>{
@@ -74,14 +76,17 @@ async function exec(ctx, next, Instance, method, methodDefine) {
     })
   }, [])
   .then(args=>{
+    args.push(ctx)
     return Instance[method](...args)
   })
   .then(data=>{
-    ctx.body = data
+    ctx.response.body = data
+    ctx.response.status
     return next()
   })
   .catch(err=>{
-    ctx.response.status = err.code || 500
+    logger.error(`method: ${method}, date: ${Date.now()}, err: ${err}`)
+    ctx.response.status = util.isNumber(err.code) ? err.code : 500
     ctx.response.body = err
     return next()
   })
