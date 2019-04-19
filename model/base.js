@@ -29,9 +29,8 @@ function modelFuncDefine(Instance) {
    * @return {[Instance]} Instance Array
    */
   Instance.find = function find(filter) {
-    console.log(filter)
     // TODO: fix findAll bug
-    return Instance.findAll()
+    return Instance.findAll(filter)
   }
   /**
    * find Instance By id

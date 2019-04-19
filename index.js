@@ -1,5 +1,6 @@
 
 const path = require('path')
+const crypto = require('crypto')
 const Koa = require('koa')
 const Router = require('koa-router')
 const json = require('koa-json')
@@ -20,7 +21,11 @@ async function main() {
   const configOptions = readYaml(path.join(__dirname, 'config.yaml'))
   // TODO:
   // config option validate
-  app.context.configOptions = configOptions
+  app.context.configOptions = configOptions || {}
+  app.context.configOptions.jwt = app.context.configOptions.jwt || {}
+  app.context.configOptions.jwt.secretKey = app.context.configOptions.jwt.secretKey || 
+                                            crypto.createHash('sha1').update(crypto.randomBytes(16)).digest('hex');
+  app.context.configOptions.jwt.expireDate = app.context.configOptions.jwt.expireDate || 1000 * 60 * 60 * 24 * 7
   app.router = router
 
   // using middleware
