@@ -30,3 +30,4 @@ methods:
     return:
       args: 'jwt Token'
       type: 'object'
+    acl: "everyone"

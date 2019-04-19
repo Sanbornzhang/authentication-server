@@ -1,6 +1,7 @@
 const fs = require('fs')
 const util = require('util')
 const path = require('path')
+const jwt = require('jsonwebtoken')
 const loadYaml = require('../utils/load-yaml')
 const Promise = require('bluebird')
 const folderPath = path.join(__dirname, '../model')
@@ -8,14 +9,71 @@ const baseDefineYamlPath = path.join(__dirname, '../model', 'base.yaml')
 const baseDefinition = loadYaml(baseDefineYamlPath)
 const baseMethodDefine = baseDefinition.methods
 
+let logger;
+/**
+ * check user access
+ * @param {*} ctx koa ctx
+ * @param {*} acl acl define
+ * @param {string} methodName request method name
+ * @return {Promise}
+ */
+function accessCheck(ctx, acl, methodName) {
+  /**
+   * check user role allow request this method
+   * @param {String} authorization
+   * @param {String} secretKey
+   * @param {String} methodName
+   * @return {Promise}
+   */
+  function userRoleAccessCheck(authorization, secretKey, methodName) {
+    if (!authorization) {
+      return Promise.resolve(false)
+    }
+    let authData = {}
+    try {
+      authData = jwt.verify(authorization, secretKey)
+    } catch (error) {
+    }
+    if (!authData.expireDate) {
+      return Promise.resolve(false)
+    }
+    const result = authData.expireDate > Date.now()
+    // TODO: check user role on user Role Permission
+    return Promise.resolve(result)
+  }
+
+  const header = ctx.request.header
+  // check acl
+  if (acl && acl === 'everyone') {
+    return Promise.resolve(true)
+  }
+  const secretKey = ctx.configOptions.jwt.secretKey
+  return userRoleAccessCheck(header.authorization, secretKey, methodName)
+  .then(result=>{
+    if (!result) {
+      const error = new Error()
+      error.code = 401
+      error.message = 'Authentication authority failed'
+      error.name = 'AUTHENTICATION_AUTH_FAILED'
+      return Promise.reject(error)
+    }
+    return Promise.resolve(true)
+  })
+}
 /**
  * hook function
  * @param {*} ctx
+ * @param {*} methodDefine
  * @param {*} next
  * @return {Next} next
  */
-function hook(ctx, next) {
-  return next()
+function hook(ctx, methodDefine, next) {
+  // console.log('beforeHook', ctx.request, methodDefine)
+  logger = logger || ctx.logger
+  return accessCheck(ctx, methodDefine.acl, methodDefine.name)
+  .then(_=>{
+    return next()
+  })
 }
 /**
  * arg params Check
@@ -41,11 +99,13 @@ function argCheck(ctx, argDefine = {}) {
     let arg = params[argDefine.arg]
     // TODO: if is instance should be all payload not payload[instanceName]
     // TODO: need parse other data type
-    if (argDefine.type.toLowerCase() === 'object') {
-      try {
-        arg = JSON.parse(arg)
-      } catch (error) {
-        return reject(error)
+    if (arg) {
+      if (argDefine.type.toLowerCase() === 'object') {
+        try {
+          arg = JSON.parse(arg)
+        } catch (error) {
+          return reject(error)
+        }
       }
     }
     if (argDefine.required && !arg) {
@@ -54,20 +114,14 @@ function argCheck(ctx, argDefine = {}) {
     return resolve(arg)
   })
 }
+
 /**
- * execute function
+ * args parameter check
  * @param {*} ctx
- * @param {*} next
- * @param {Instance} Instance
- * @param {String} method Name
- * @param {Object} methodDefine
+ * @param {*} argsDefine
+ * @return {Promise[]}
  */
-async function exec(ctx, next, Instance, method, methodDefine) {
-  // TODO:
-  // error handing on last call
-  const logger = ctx.logger
-  const argsDefine = methodDefine.accepts || []
-  methodDefine.http.method = methodDefine.http.method || 'get'
+function argsChecks(ctx, argsDefine = []) {
   return Promise.reduce(argsDefine, (args, argDefine)=>{
     return argCheck(ctx, argDefine)
     .then(_=>{
@@ -75,6 +129,21 @@ async function exec(ctx, next, Instance, method, methodDefine) {
       return args
     })
   }, [])
+}
+/**
+ * execute function
+ * @param {*} ctx
+ * @param {Instance} Instance
+ * @param {String} method Name
+ * @param {Object} methodDefine
+ * @param {*} next
+ * @return {Promise}
+ */
+function exec(ctx, Instance, method, methodDefine, next) {
+  logger = logger || ctx.logger
+  const argsDefine = methodDefine.accepts || []
+  methodDefine.http.method = methodDefine.http.method || 'get'
+  return argsChecks(ctx, argsDefine)
   .then(args=>{
     args.push(ctx)
     return Instance[method](...args)
@@ -85,9 +154,14 @@ async function exec(ctx, next, Instance, method, methodDefine) {
     return next()
   })
   .catch(err=>{
-    logger.error(`method: ${method}, date: ${Date.now()}, err: ${err}`)
-    ctx.response.status = util.isNumber(err.code) ? err.code : 500
-    ctx.response.body = err
+    const error ={}
+    error.name = err.name
+    error.message = err.message
+    error.stack = err.stack
+    error.status = util.isNumber(err.code) ? err.code : 500
+    logger.error(`method: ${method}, date: ${Date.now()}, err: ${error}`)
+    ctx.response.status = error.status
+    ctx.response.body = error
     return next()
   })
 }
@@ -203,9 +277,12 @@ function defineRouter(router, definition, Instance, log, app) {
     log.info(`Create Router| method: ${httpMethod}, path: ${httpPath}`)
     router[httpMethod](
       httpPath,
-      // beforeHook,
       (ctx, next)=>{
-        return exec(ctx, next, Instance.model, method, definition[method])
+        definition[method]['name'] = `${Instance.modelName}.${method}`
+        return beforeHook(ctx, definition[method], next)
+      },
+      (ctx, next)=>{
+        return exec(ctx, Instance.model, method, definition[method], next)
       },
       // afterHook
     )
